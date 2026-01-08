@@ -56,25 +56,17 @@ def greedy_decode(model, images, captions_seq, cfg):
 
 
 def train(cfg, keep_small=False):
-    # ===============================
     # 1) Load training data
-    # ===============================
     print("Loading training dataset...")
     train_processed, tokenizer = prepare_dataset(cfg, split="train", keep_small=keep_small)
     train_ds = make_tf_dataset(train_processed, cfg, shuffle=True)
     print("Training examples:", len(train_processed))
-
-    # ===============================
     # 2) Load validation data ONCE
-    # ===============================
     print("Loading validation dataset...")
     val_processed, _ = prepare_dataset(cfg, split="test", keep_small=True)
     val_ds = make_tf_dataset(val_processed, cfg, shuffle=False).take(1)
     print("Validation examples:", len(val_processed))
-
-    # ===============================
     # 3) Build model
-    # ===============================
     models = build_multimodal_model(cfg)
     model = models["full_model"]
     visual_enc = models["visual_enc"]
@@ -83,22 +75,17 @@ def train(cfg, keep_small=False):
         learning_rate=float(cfg["training"].get("lr", 1e-4))
     )
 
-    # ===============================
     # 4) Checkpoint directory
-    # ===============================
     ensure_dir(cfg["training"]["save_dir"])
     ckpt_prefix = os.path.join(cfg["training"]["save_dir"], "ckpt")
-
-    # ===============================
     # 5) Training step
-    # ===============================
     def train_step(images, captions_seq, dec_input, dec_target):
         with tf.GradientTape() as tape:
             logits, img_pred = model(
                 [images, captions_seq, dec_input], training=True
             )
 
-            # ---- Text loss ----
+            # Text loss 
             per_token_loss = tf.keras.losses.sparse_categorical_crossentropy(
                 dec_target, logits, from_logits=True
             )
@@ -109,7 +96,7 @@ def train(cfg, keep_small=False):
                 tf.reduce_sum(mask) + 1e-8
             )
 
-            # ---- Image feature loss ----
+            # Image feature loss 
             last_images = images[:, -1]
             target_feat = tf.stop_gradient(
                 visual_enc(last_images, training=False)
@@ -126,9 +113,7 @@ def train(cfg, keep_small=False):
 
         return loss_text.numpy(), loss_img.numpy(), loss.numpy()
 
-    # ===============================
     # 6) Training loop
-    # ===============================
     epochs = int(cfg["training"]["epochs"])
 
     for epoch in range(epochs):
@@ -154,16 +139,12 @@ def train(cfg, keep_small=False):
             if step >= 3:  # limit to 4 steps per epoch
                 break
 
-        # ===============================
         # 7) Save checkpoint
-        # ===============================
         ckpt_path = f"{ckpt_prefix}_epoch{epoch+1}.weights.h5"
         model.save_weights(ckpt_path)
         print(f"Saved checkpoint: {ckpt_path}")
 
-        # ===============================
         # 8) Validation + Metrics
-        # ===============================
         all_preds, all_refs = [], []
 
         for images_batch, input_ids_batch in val_ds:
@@ -211,3 +192,4 @@ if __name__ == "__main__":
 
     cfg = load_config(args.config)
     train(cfg, keep_small=args.small)
+
