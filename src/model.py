@@ -10,26 +10,26 @@ def build_visual_encoder(image_size=224, feat_dim=512):
     inp = tf.keras.Input(shape=(image_size, image_size, 3), name='image_input')
     x = inp
 
-    # --- Stem ---
+    # Stem 
     x = layers.Conv2D(32, 3, padding='same', activation='relu')(x)
     x = layers.BatchNormalization()(x)
     x = layers.MaxPool2D(2)(x)
 
-    # --- Block 1 ---
+    # Block 1
     x = layers.Conv2D(64, 3, padding='same', activation='relu')(x)
     x = layers.BatchNormalization()(x)
     x = layers.Conv2D(64, 3, padding='same', activation='relu')(x)
     x = layers.BatchNormalization()(x)
     x = layers.MaxPool2D(2)(x)
 
-    # --- Block 2 ---
+    # Block 2
     x = layers.Conv2D(128, 3, padding='same', activation='relu')(x)
     x = layers.BatchNormalization()(x)
     x = layers.Conv2D(128, 3, padding='same', activation='relu')(x)
     x = layers.BatchNormalization()(x)
     x = layers.MaxPool2D(2)(x)
 
-    # --- Block 3 ---
+    # Block 3
     x = layers.Conv2D(256, 3, padding='same', activation='relu')(x)
     x = layers.BatchNormalization()(x)
     x = layers.GlobalAveragePooling2D()(x)
@@ -54,7 +54,7 @@ def build_multimodal_model(cfg):
     image_size = cfg['dataset']['image_size']
     max_cap_len = cfg['dataset']['max_caption_len']
 
-    # ---- Encoders ----
+    # Encoders 
     visual_enc = build_visual_encoder(
         image_size=image_size,
         feat_dim=cfg['model']['image_feat_dim']
@@ -98,7 +98,7 @@ def build_multimodal_model(cfg):
 
     context = temporal_out[:, -1, :]
 
-    # ---- Text Decoder ----
+    # Text Decoder
     dec_input = tf.keras.Input(
         shape=(max_cap_len,),
         dtype='int32',
@@ -125,7 +125,7 @@ def build_multimodal_model(cfg):
         name='logits'
     )(dec_out)
 
-    # ---- Image feature prediction ----
+    #  Image feature prediction 
     img_pred = layers.Dense(
         cfg['model']['temporal_hidden_dim'],
         activation='relu'
@@ -146,3 +146,4 @@ def build_multimodal_model(cfg):
         "visual_enc": visual_enc,
         "text_enc": text_enc
     }
+
