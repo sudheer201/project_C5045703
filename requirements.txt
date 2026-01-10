@@ -1,0 +1,15 @@
+
+---
+
+# 📄 `requirements.txt`
+
+tensorflow>=2.12
+numpy
+pyyaml
+pillow
+datasets
+transformers
+nltk
+tqdm
+matplotlib
+scikit-learn
